@@ -1,0 +1,147 @@
+﻿<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todolist</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+    <style>
+        .completed {
+            text-decoration: line-through
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <input type="text" name="name" value="" v-model="text" @keydown.enter="addTodo" />
+        <button type="button" value="submit" @click="addTodo">新增</button>
+        <div v-for="item in filterTodos">
+            <div>
+                <input type="checkbox" name="name" value="" @click="item.completed = !item.completed" :checked="item.completed">
+                <label :class="item.completed ? 'completed': ''" class="form-check-label" @dblclick="editTodo(item.id, item.title)">
+                    {{
+                      item.title
+                    }}
+                </label>
+
+                <button type="button" @click='deleteTodo(item.id)'>X</button> <button @click="editTodo(item.id, item.title)">編輯</button>
+                <button v-if="cacheId === item.id" @click="doneEdit(item)">完成</button>
+                <input v-if="cacheId === item.id" v-model="cacheTitle" @keyup.enter="doneEdit(item)"
+                       @keyup.esc="cancelEdit" class="form-control" type="text" />
+
+            </div>
+            <!--參考-->
+            <!----  <div class="form-check">
+            <input v-if="cacheId === item.id" v-model="cacheTitle" @keyup.enter="doneEdit(item)"
+                   @keyup.esc="cancelEdit" class="form-control" type="text" />
+            <div v-else>
+                <input :id="item.id" type="checkbox" class="form-check-input"
+                       @click="item.completed = !item.completed" :checked="item.completed">
+                <label @dblclick="editTodo(item.id, item.title)" :for="item.id"
+                       :class="item.completed ? 'completed': ''" class="form-check-label">
+                    {{
+                  item.title
+                    }}
+                </label>
+            </div>
+        </div>
+        --->
+        </div>
+        <button v-if="todoList.length>0" @click="allDelete">清除所有的todo</button>
+        <button @click.prevent="visibility = 'all'">全部的項目</button>
+        <button @click.prevent="visibility = 'completed'">完成的項目</button>
+        <button @click.prevent="visibility = 'active'">未完成的項目</button>
+        <br />
+        <span>有 <span id="taskCount">{{ filterTodos.length }}</span> 筆任務</span>
+
+        <div>
+
+        </div>
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8"
+            crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        Vue.createApp({
+            data() {
+                return {
+                    text: '',
+                    todoList: [],
+                    cacheTitle: '',
+                    cacheId: '',
+                    visibility: 'all',
+                }
+            },
+            computed: { //不會改變原本的數值
+                filterTodos() {
+                    switch (this.visibility) {
+                        case 'active':
+                            return this.todoList.filter((item) => !item.completed);
+                        case 'completed':
+                            return this.todoList.filter((item) => item.completed);
+                        default:
+                            return this.todoList;
+                    }
+                }
+            },
+            methods: {
+                addTodo() {
+
+                    this.todoList.push({
+                        id: Date.now(), //這裡給他id是用來刪除用的 不然不知道刪哪ㄍ
+                        title: this.text,
+                        completed: false,
+                        visibility:'all',
+                    });
+                    this.text = '';
+                    console.log(this.todoList);
+
+                    localStorage.setItem('todoItem', JSON.stringify(this.todoList));
+                    this.newTodo = '';
+                },
+
+                deleteTodo(id) {
+
+                  //  this.todoList.splice();
+                    const index = this.todoList.findIndex((item) => item.id === id);
+                    this.todoList.splice(index, 1);
+                    localStorage.setItem('todoItem', JSON.stringify(this.todoList));
+                  
+                },
+                editTodo(id, title) {
+                    this.cacheTitle = title;
+                    this.cacheId = id;
+                },
+                doneEdit(item) {
+                    if (!this.cacheTitle) {
+                        return;
+                    }
+                    const index = this.todoList.findIndex((item) => item.id === this.cacheId);
+                    this.todoList[index].title = this.cacheTitle;
+
+                    this.cacheTitle = '';
+                    this.cacheId = '';
+                },
+
+                allDelete() {
+                    this.todoList = [];
+                    localStorage.setItem('todoItem', JSON.stringify(this.todoList));
+                }
+
+
+            },
+            mounted() {
+                localStorage.clear();
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>
